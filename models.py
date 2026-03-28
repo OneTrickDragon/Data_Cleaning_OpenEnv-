@@ -125,3 +125,29 @@ class State(BaseModel):
     step_count:     int  = 0
     done:           bool = False
     had_crash:      bool = False
+
+class ResetRequest(BaseModel):
+    task_id: TaskID = TaskID.ECOMMERCE_EASY
+    seed:    int    = 42
+ 
+ 
+class StepRequest(BaseModel):
+    session_id: str
+    action:     Action
+ 
+ 
+class ResetResponse(BaseModel):
+    session_id:  str
+    observation: Observation
+ 
+ 
+class StepResponse(BaseModel):
+    observation: Observation
+    reward:      Optional[Reward] = None   # populated only when done=True
+    done:        bool
+    info:        dict[str, Any] = Field(default_factory=dict)
+ 
+ 
+class StateResponse(BaseModel):
+    session_id: str
+    state:      State
