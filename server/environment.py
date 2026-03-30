@@ -185,3 +185,62 @@ def _make_ecommerce(rng: random.Random, np_rng: np.random.Generator) -> tuple[pd
     gold["revenue"] = (gold["quantity"].clip(lower=0) * gold["price"].fillna(gold["price"].median())).round(2)
  
     return dirty, gold
+
+def _make_patient_records(rng: random.Random, np_rng: np.random.Generator) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Returns (dirty_df, gold_df) for the medium task."""
+    n_unique = 800
+    first_names = ["James","Mary","John","Patricia","Robert","Jennifer","Michael","Linda",
+                   "William","Barbara","David","Susan","Richard","Jessica","Joseph","Sarah"]
+    last_names  = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis",
+                   "Wilson","Anderson","Taylor","Thomas","Jackson","White","Harris","Martin"]
+    icd10_pool  = ["J45.9","I10","E11.9","Z00.00","M54.5","F32.1","K21.0","N39.0","J06.9","R51"]
+ 
+    records = []
+    for i in range(n_unique):
+        pid   = f"PAT-{i:05d}"
+        fname = rng.choice(first_names)
+        lname = rng.choice(last_names)
+        dob   = pd.Timestamp("1950-01-01") + pd.Timedelta(days=rng.randint(0, 25000))
+        phone = f"+1{''.join([str(rng.randint(0,9)) for _ in range(10)])}"
+        email = f"{fname.lower()}.{lname.lower()}{rng.randint(1,99)}@example.com"
+        icd   = rng.choice(icd10_pool) if rng.random() > 0.2 else None
+        records.append({
+            "patient_id": pid, "first_name": fname, "last_name": lname,
+            "dob": dob.strftime("%Y-%m-%d"), "phone": phone, "email": email,
+            "icd10_code": icd, "icd10_notes": f"Patient presents with condition {icd}. Follow-up required." if icd else "No code.",
+        })
+ 
+    gold = pd.DataFrame(records)
+ 
+    # Build dirty by duplicating ~20% with name mutations
+    dirty_rows = list(records)
+    dup_indices = rng.sample(range(n_unique), k=int(n_unique * 0.2))
+    for idx in dup_indices:
+        dup = dict(records[idx])
+        # Mutate name
+        mutation = rng.randint(0, 2)
+        if mutation == 0:
+            dup["first_name"] = dup["first_name"][0] + "."
+        elif mutation == 1:
+            dup["last_name"], dup["first_name"] = f"{dup['last_name'].upper()}, {dup['first_name']}", ""
+        else:
+            dup["first_name"] = dup["first_name"].lower()
+        # Vary dob format
+        dob_dt = pd.Timestamp(dup["dob"])
+        fmt = rng.choice(["%m/%d/%Y", "%d-%b-%Y"])
+        dup["dob"] = dob_dt.strftime(fmt)
+        # Vary phone format
+        digits = re.sub(r"\D", "", dup["phone"])[-10:]
+        fmt_p = rng.randint(0, 2)
+        if fmt_p == 0:   dup["phone"] = f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+        elif fmt_p == 1: dup["phone"] = f"{digits[:3]}.{digits[3:6]}.{digits[6:]}"
+        else:            dup["phone"] = digits
+        # Uppercase email sometimes
+        if rng.random() > 0.5:
+            dup["email"] = dup["email"].upper()
+        # Null out a field to make "less complete"
+        dup[rng.choice(["icd10_code", "icd10_notes"])] = None
+        dirty_rows.append(dup)
+ 
+    dirty = pd.DataFrame(dirty_rows).sample(frac=1, random_state=rng.randint(0, 9999)).reset_index(drop=True)
+    return dirty, gold
