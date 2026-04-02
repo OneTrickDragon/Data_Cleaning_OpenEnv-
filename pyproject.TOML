@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "data-cleaning-openenv"
+version = "0.1.0"
+description = "OpenEnv environment for tabular data cleaning via a sandboxed Python REPL"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+
+dependencies = [
+    # OpenEnv framework (server + client + CLI)
+    "openenv-core[core]>=0.2.1",
+
+    # Data simulation
+    "pandas>=2.2.0,<4.0.0",
+    "numpy>=1.26.0,<3.0.0",
+    "tabulate>=0.9.0",           # pandas .to_markdown() dependency
+
+    # Server runtime
+    "fastapi>=0.111.0,<0.200.0",
+    "uvicorn[standard]>=0.29.0,<0.40.0",
+    "pydantic>=2.7.0,<3.0.0",
+]
+
+[project.optional-dependencies]
+# Baseline inference (prompted LLM agent, no training)
+baseline = [
+    "openai>=1.30.0,<2.0.0",
+]
+
+# GRPO training
+train = [
+    "torch>=2.2.0",
+    "transformers>=4.40.0",
+    "accelerate>=0.30.0",
+    "tqdm>=4.66.0",
+]
+
+# Upload to HuggingFace
+deploy = [
+    "huggingface_hub>=0.23.0",
+]
+
+# Everything
+all = [
+    "data-cleaning-openenv[baseline,train,deploy]",
+]
+
+[project.scripts]
+# uv run server  →  starts the FastAPI server (matches OpenEnv convention)
+server = "server.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["server*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.md", "*.yaml", "*.txt"]
