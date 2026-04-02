@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from openenv.core.env_server import create_fastapi_app
 
 from models import DataCleaningAction, DataCleaningObservation
-from server.environment import DataCleaningEnvironment
+from server.dc_environment import DataCleaningEnvironment
 
 env = DataCleaningEnvironment()
 
