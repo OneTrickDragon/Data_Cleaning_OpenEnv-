@@ -1,10 +1,11 @@
-name: data-cleaning-env
+name: data-cleaning-openenv
 version: 0.1.0
 description: >
   OpenEnv environment where an agent cleans messy tabular datasets using a
-  sandboxed Python REPL. Three tasks: e-commerce orders (easy), patient
-  records deduplication (medium), financial transaction auditing (hard).
-  Dense partial rewards are returned after every exec step.
+  sandboxed Python REPL. Three tasks of increasing difficulty: e-commerce
+  orders (easy), patient records deduplication (medium), and financial
+  transaction auditing with 10 named business rules (hard). Dense partial
+  rewards are returned after every exec step.
 
 tags:
   - data-engineering
@@ -31,18 +32,27 @@ tasks:
     baseline_score_gpt4o: 0.30
 
 action_space:
-  type: object
-  properties:
+  type: dataclass
+  class: DataCleaningAction
+  fields:
     type:
       type: string
       enum: [exec, submit]
     code:
       type: string
       description: Python snippet up to 50 lines. df is in scope. Required when type=exec.
+    task_id:
+      type: string
+      description: Task to run. Used only in reset().
+      enum: [ecommerce_easy, patient_records_medium, financial_audit_hard]
+    seed:
+      type: integer
+      description: RNG seed for reproducibility. Used only in reset().
 
 observation_space:
-  type: object
-  properties:
+  type: dataclass
+  class: DataCleaningObservation
+  fields:
     df_preview:
       type: string
       description: First 10 rows as markdown table
@@ -65,43 +75,25 @@ observation_space:
       type: number
       minimum: 0.0
       maximum: 1.0
+      description: Dense reward signal updated after every exec step
     done:
       type: boolean
     error:
       type: string
       description: Exception message if last exec raised
+    reward:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Final reward when done=True
 
 reward_space:
-  type: object
-  properties:
-    total:
-      type: number
-      minimum: 0.0
-      maximum: 1.0
-    column_quality:
-      type: number
-      minimum: 0.0
-      maximum: 1.0
-      weight: 0.50
-    schema_compliance:
-      type: number
-      minimum: 0.0
-      maximum: 1.0
-      weight: 0.20
-    row_preservation:
-      type: number
-      minimum: 0.0
-      maximum: 1.0
-      weight: 0.15
-    efficiency:
-      type: number
-      minimum: 0.0
-      maximum: 1.0
-      weight: 0.10
-    no_crash_bonus:
-      type: number
-      minimum: 0.0
-      maximum: 0.05
+  components:
+    column_quality:    { weight: 0.50, description: Per-column dtype/null/value correctness }
+    schema_compliance: { weight: 0.20, description: Output columns match expected schema }
+    row_preservation:  { weight: 0.15, description: Penalise unnecessary row drops }
+    efficiency:        { weight: 0.10, description: Bonus <=10 steps, penalty >15 steps }
+    no_crash_bonus:    { weight: 0.05, description: No unhandled exceptions in episode }
 
 episode:
   max_steps: 20
@@ -110,16 +102,14 @@ episode:
 
 sandbox:
   language: python3.11
-  allowed_imports:
-    - pandas
-    - numpy
-    - re
-    - datetime
-    - difflib
-    - unicodedata
-    - collections
-    - itertools
-    - math
-    - string
+  pre_injected: [pd, np, re, math, datetime, difflib, unicodedata, collections, itertools, string]
+  allowed_imports: [pandas, numpy, re, datetime, difflib, unicodedata, collections, itertools, math, string]
+  blocked: [open, file I/O, network, subprocess, compile, breakpoint]
   max_lines_per_step: 50
-  blocked: file I/O, network, subprocess
+
+framework:
+  package: openenv-core
+  version: ">=0.2.1"
+  transport: websocket
+  base_class: openenv.core.env_server.Environment
+  client_class: openenv.core.env_client.EnvClient
