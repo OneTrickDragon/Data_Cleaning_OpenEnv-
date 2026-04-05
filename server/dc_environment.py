@@ -164,8 +164,8 @@ class DataCleaningEnvironment(Environment):
         """Return the current episode state (episode_id, step_count, done, etc.)."""
         return self._state
 
-import server.dc_environment as _env_module
-from server.dc_environment import (
+import server.environment as _env_module
+from server.environment import (
     TASK_SPECS as _TASK_SPECS,
     partial_grade as _partial_grade,
 )
@@ -199,4 +199,4 @@ def _build_observation(
 
 _env_module.build_observation = _build_observation
 
-from server.dc_environment import build_observation  # noqa: F811, E402
+from server.environment import build_observation  # noqa: F811, E402
