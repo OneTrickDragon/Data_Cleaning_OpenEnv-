@@ -11,8 +11,16 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-from openenv.core.env_server import Action, Observation, State
 
+try:
+    from openenv.core.env_server import Action, Observation, State
+except ImportError:
+    @dataclass
+    class Action: pass         # type: ignore[no-redef]
+    @dataclass
+    class Observation: pass    # type: ignore[no-redef]
+    @dataclass
+    class State: pass  
 
 # Enums
 class ActionType(str, Enum):
