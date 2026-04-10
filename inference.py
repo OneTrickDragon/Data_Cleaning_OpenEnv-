@@ -25,16 +25,18 @@ from typing import List, Optional
 
 from openai import OpenAI
 
+# ---------------------------------------------------------------------------
 # Configuration
+# ---------------------------------------------------------------------------
 
 IMAGE_NAME   = os.getenv("LOCAL_IMAGE_NAME")
-API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+# Use the validator-injected API_KEY and API_BASE_URL strictly — no fallbacks
+API_KEY      = os.environ["API_KEY"]
+API_BASE_URL = os.environ["API_BASE_URL"]
 MODEL_NAME   = os.getenv("MODEL_NAME",   "Qwen/Qwen2.5-72B-Instruct")
 TASK_NAME    = os.getenv("DC_TASK",      "ecommerce_easy")
 BENCHMARK    = "data-cleaning-openenv"
 DC_SEED      = int(os.getenv("DC_SEED",  "42"))
-# Default to the live Space so the script works even without LOCAL_IMAGE_NAME
 ENV_URL      = os.getenv("DC_ENV_URL",   "https://onetrickdragon-data-cleaning-openenv.hf.space")
 
 MAX_STEPS               = 8
@@ -42,12 +44,15 @@ TEMPERATURE             = 0.3
 MAX_TOKENS              = 512
 SUCCESS_SCORE_THRESHOLD = 0.5
 
-
+# ---------------------------------------------------------------------------
 # OpenAI client (configured via env vars as required by submission spec)
+# ---------------------------------------------------------------------------
 
 client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
+# ---------------------------------------------------------------------------
 # Import environment client — handle path issues gracefully
+# ---------------------------------------------------------------------------
 
 def _load_env_client():
     """
@@ -80,7 +85,10 @@ def _load_env_client():
         "or install open-env: pip install open-env"
     )
 
+# ---------------------------------------------------------------------------
 # Logging helpers
+# ---------------------------------------------------------------------------
+
 def log_start(task: str, env: str, model: str) -> None:
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
@@ -103,7 +111,10 @@ def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> No
         flush=True,
     )
 
+# ---------------------------------------------------------------------------
 # Prompts
+# ---------------------------------------------------------------------------
+
 SYSTEM_PROMPT = textwrap.dedent("""\
     You are a data engineering expert working in a Python REPL.
     You have a pandas DataFrame called `df` and must clean it according to the task spec.
@@ -154,7 +165,9 @@ def parse_action(text: str) -> tuple:
     t = t.replace("```python", "").replace("```", "").strip()
     return t, False
 
+# ---------------------------------------------------------------------------
 # Episode
+# ---------------------------------------------------------------------------
 
 async def run_episode() -> None:
     rewards:     List[float] = []
