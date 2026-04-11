@@ -36,6 +36,7 @@ TASK_NAME  = os.getenv("DC_TASK",    "ecommerce_easy")
 BENCHMARK  = "data-cleaning-openenv"
 DC_SEED    = int(os.getenv("DC_SEED", "42"))
 ENV_URL    = os.getenv("DC_ENV_URL", "https://onetrickdragon-data-cleaning-openenv.hf.space")
+HF_TOKEN  = os.getenv("HF_TOKEN")
 
 MAX_STEPS               = 8
 TEMPERATURE             = 0.3
@@ -165,7 +166,7 @@ async def run_episode() -> None:
     # Create OpenAI client here — env vars guaranteed to be set by now
     client = OpenAI(
         base_url=os.environ["API_BASE_URL"],
-        api_key=os.environ["API_KEY"],
+        api_key=HF_TOKEN,
     )
 
     base_url = ENV_URL.rstrip("/")
