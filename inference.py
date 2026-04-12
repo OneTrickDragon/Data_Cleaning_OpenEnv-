@@ -37,7 +37,7 @@ BENCHMARK  = "data-cleaning-openenv"
 DC_SEED    = int(os.getenv("DC_SEED", "42"))
 ENV_BASE_URL    = os.getenv("DC_ENV_URL", "https://onetrickdragon-data-cleaning-openenv.hf.space")
 HF_TOKEN  = os.getenv("HF_TOKEN")
-API_BASE_URL = os.environ("API_BASE_URL", "https://router.hugginface.co.v1")
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.hugginface.co.v1")
 
 MAX_STEPS               = 8
 TEMPERATURE             = 0.3
