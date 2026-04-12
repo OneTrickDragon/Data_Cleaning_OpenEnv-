@@ -138,20 +138,16 @@ async def run_episode() -> None:
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
     try:
-        # --- THE VALIDATOR BYPASS ---
-        # 1. Provide fallbacks just in case it's a dry run so it doesn't crash
-        os.environ.setdefault("API_KEY", os.getenv("HF_TOKEN", "dummy_key"))
-        os.environ.setdefault("API_BASE_URL", "https://router.huggingface.co/v1")
+        # Use the validator-injected env vars directly — no URL modification
+        api_base = os.environ.get("API_BASE_URL") or os.environ.get("OPENAI_BASE_URL", "https://router.huggingface.co/v1")
+        api_key = os.environ.get("API_KEY") or os.environ.get("HF_TOKEN", "dummy_key")
 
-        # 2. Silently fix the URL inside the environment dictionary to guarantee /v1
-        current_url = os.environ.get("API_BASE_URL", "")
-        if current_url and not current_url.endswith("/v1"):
-            os.environ["API_BASE_URL"] = f"{current_url.rstrip('/')}/v1"
+        print(f"[DEBUG] Using API_BASE_URL={api_base}", flush=True)
+        print(f"[DEBUG] API_KEY is set: {bool(api_key and api_key != 'dummy_key')}", flush=True)
 
-        # 3. Initialize exactly as the validator's strict parser demands
         client = OpenAI(
-            base_url=os.environ["API_BASE_URL"],
-            api_key=os.environ["API_KEY"]
+            base_url=api_base,
+            api_key=api_key,
         )
 
         # 4. Import client.py inside the try block
