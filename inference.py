@@ -30,14 +30,14 @@ from openai import OpenAI
 # Configuration — read at call time inside functions, not at import time
 # ---------------------------------------------------------------------------
 
-IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+IMAGE_NAME = os.getenv("IMAGE_NAME")
+MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 TASK_NAME  = os.getenv("DC_TASK",    "ecommerce_easy")
 BENCHMARK  = "data-cleaning-openenv"
 DC_SEED    = int(os.getenv("DC_SEED", "42"))
 ENV_BASE_URL    = os.getenv("DC_ENV_URL", "https://onetrickdragon-data-cleaning-openenv.hf.space")
-HF_TOKEN  = os.getenv("HF_TOKEN")
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.hugginface.co.v1")
+API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
+API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 
 MAX_STEPS               = 8
 TEMPERATURE             = 0.3
@@ -165,12 +165,7 @@ async def run_episode() -> None:
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
     # Create OpenAI client here — env vars guaranteed to be set by now
-    if HF_TOKEN:
-        client = OpenAI(
-        base_url=API_BASE_URL, api_key=HF_TOKEN
-    )
-    else:
-        client = None
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
     base_url = ENV_BASE_URL.rstrip("/")
 
