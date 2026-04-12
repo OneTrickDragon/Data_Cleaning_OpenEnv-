@@ -159,20 +159,20 @@ async def run_episode() -> None:
 
     try:
         # Add script directory to path so client.py is importable
-        api_key = os.getenv("API_KEY")
+        api_key = os.environ["API_KEY"]
         if not api_key:
             # Fallback to prevent immediate crash if validator does a dry-run
             api_key = os.getenv("HF_TOKEN", "dummy_key_to_prevent_crash")
         
-        api_base = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+        api_base = os.environ["API_BASE_URL"]
         
         # Ensure the proxy URL has the /v1 suffix
-        #if api_base and not api_base.endswith("/v1"):
-         #   api_base = f"{api_base.rstrip('/')}/v1"
+        if api_base and not api_base.endswith("/v1"):
+            api_base = f"{api_base.rstrip('/')}/v1"
 
         client = OpenAI(
-            base_url=os.environ["API_BASE_URL"],
-            api_key=os.environ["API_KEY"]
+            base_url=api_base,
+            api_key=api_key
         )
 
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
